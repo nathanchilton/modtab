@@ -1,0 +1,98 @@
+#!/usr/bin/env ruby
+require "optparse"
+require "json"
+require "pry-nav"
+
+@settings = {
+  harp_type: "Melody Maker G",
+  operation: "letters"
+}
+
+usage = "Translates harmonica tab indicators to letters
+Usage:
+To process a file as input:
+  add_letters --file=INPUT_FILE
+To enter interactive mode:
+  add_letters
+
+The default harp type is: Melody Maker G.
+To switch to Diatonic C, us the '-d' parameter.
+"
+
+OptionParser.new { |parser|
+  parser.on("-d") do |scenario_name|
+    @settings[:harp_type] = "Diatonic C"
+  end
+
+  parser.on("--file=INPUT_FILE") do |input_file|
+    @settings[:input_file] = input_file
+  end
+
+  parser.on("--shift=DELTA") do |delta|
+    @settings[:shift] = delta.to_i
+  end
+
+  parser.on("-h", "--help") do
+    puts usage
+    exit(0)
+  end
+}.parse!
+
+@lookup_table = JSON.parse(File.read("harptab_note_lookup.json"))[@settings[:harp_type]]
+
+def replace_indicators_with_letters(text)
+  translation = text
+
+  if @settings[:shift]
+    note_list = @lookup_table.keys
+    iteration_list = @settings[:shift] > 0 ? note_list.reverse : note_list
+    # binding.pry
+    first_item = true
+    iteration_list.each do |indicator|
+      if first_item
+        first_item = false
+        next
+      end
+      old_value_location = note_list.find_index(indicator)
+      new_value_location = old_value_location + @settings[:shift]
+      translation = translation.gsub(note_list[old_value_location], note_list[new_value_location])
+    end
+
+  else
+    @lookup_table.each_pair do |key, value|
+      translation = translation.gsub(key, value)
+    end
+  end
+
+  translation
+end
+
+def start_tab_repl
+  puts "Enter a string to translate or a blank line to quit:"
+
+  while (line = gets.chomp).size > 0
+    puts replace_indicators_with_letters(line)
+  end
+end
+
+if @settings[:input_file]
+  old_path = @settings[:input_file]
+  old_extension = File.extname(old_path)
+  old_filename = File.basename(old_path, old_extension)
+  new_filename = old_filename + "-modified" + old_extension
+  new_path = File.join(File.dirname(old_path), new_filename)
+
+  File.open(new_path, "w") do |f|
+    File.readlines(old_path).each do |line|
+      if /(\-|\+)\d+/.match?(line)
+        f.puts replace_indicators_with_letters(line)
+        f.puts line unless @settings[:shift]
+      else
+        f.puts line
+      end
+    end
+  end
+
+else
+  start_tab_repl
+end
