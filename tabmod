@@ -10,13 +10,19 @@ require "pry-nav"
 
 usage = "Translates harmonica tab indicators to letters
 Usage:
+
 To process a file as input:
-  add_letters --file=INPUT_FILE
+  tabmod --file=INPUT_FILE
+
 To enter interactive mode:
-  add_letters
+  tabmod
+
+To shift notes up/down:
+  tabmod --shift=-3 (shifts from C to G)
+
 
 The default harp type is: Melody Maker G.
-To switch to Diatonic C, us the '-d' parameter.
+To switch to Diatonic C, use the '-d' parameter.
 "
 
 OptionParser.new { |parser|
@@ -24,11 +30,11 @@ OptionParser.new { |parser|
     @settings[:harp_type] = "Diatonic C"
   end
 
-  parser.on("--file=INPUT_FILE") do |input_file|
+  parser.on("-f INPUTFILE", "--file=INPUT_FILE") do |input_file|
     @settings[:input_file] = input_file
   end
 
-  parser.on("--shift=DELTA") do |delta|
+  parser.on("-s DELTA", "--shift=DELTA") do |delta|
     @settings[:shift] = delta.to_i
   end
 
