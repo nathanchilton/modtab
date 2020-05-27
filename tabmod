@@ -38,6 +38,10 @@ OptionParser.new { |parser|
     @settings[:shift] = delta.to_i
   end
 
+  parser.on("--summarize") do |delta|
+    @settings[:summarize] = true
+  end
+
   parser.on("-h", "--help") do
     puts usage
     exit(0)
@@ -45,6 +49,14 @@ OptionParser.new { |parser|
 }.parse!
 
 @lookup_table = JSON.parse(File.read("harptab_note_lookup.json"))[@settings[:harp_type]]
+@note_list = @lookup_table.keys
+
+def find_notes_used(line)
+  @notes_used ||= {}
+  @note_list.each do |note|
+    @notes_used[note] = true if line.include?(note)
+  end
+end
 
 def fix_assumed_direction(line)
   explicit_direction = line
@@ -60,8 +72,7 @@ def mod_line(text)
 
   if @settings[:shift]
 
-    note_list = @lookup_table.keys
-    iteration_list = @settings[:shift] > 0 ? note_list.reverse : note_list
+    iteration_list = @settings[:shift] > 0 ? @note_list.reverse : @note_list
     # binding.pry
     first_item = true
     iteration_list.each do |indicator|
@@ -69,9 +80,9 @@ def mod_line(text)
         first_item = false
         next
       end
-      old_value_location = note_list.find_index(indicator)
+      old_value_location = @note_list.find_index(indicator)
       new_value_location = old_value_location + @settings[:shift]
-      translation = translation.gsub(note_list[old_value_location], note_list[new_value_location])
+      translation = translation.gsub(@note_list[old_value_location], @note_list[new_value_location])
     end
 
   else
@@ -80,6 +91,7 @@ def mod_line(text)
     end
   end
 
+  find_notes_used(translation)
   translation
 end
 
@@ -106,6 +118,18 @@ if @settings[:input_file]
       else
         f.puts line
       end
+    end
+    if @settings[:summarize]
+      f.puts
+      f.puts "Notes/Holes Used:"
+      holes_used_string = ""
+      @note_list.each do |hole|
+        holes_used_string += " #{hole}" if @notes_used[hole]
+      end
+
+      notes_used_string = mod_line(holes_used_string)
+      f.puts notes_used_string unless @settings[:shift]
+      f.puts holes_used_string
     end
   end
 
