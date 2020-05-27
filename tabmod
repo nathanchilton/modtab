@@ -18,7 +18,7 @@ To enter interactive mode:
   tabmod
 
 To shift notes up/down:
-  tabmod --shift=-3 (shifts from C to G)
+  tabmod --shift=-3 (shifts down from C to G)
 
 
 The default harp type is: Melody Maker G.
@@ -46,10 +46,20 @@ OptionParser.new { |parser|
 
 @lookup_table = JSON.parse(File.read("harptab_note_lookup.json"))[@settings[:harp_type]]
 
-def replace_indicators_with_letters(text)
-  translation = text
+def fix_assumed_direction(line)
+  explicit_direction = line
+  (1..10).each do |i|
+    explicit_direction = explicit_direction.gsub(/\s#{i}/, "+#{i}")
+  end
+
+  explicit_direction
+end
+
+def mod_line(text)
+  translation = fix_assumed_direction(text)
 
   if @settings[:shift]
+
     note_list = @lookup_table.keys
     iteration_list = @settings[:shift] > 0 ? note_list.reverse : note_list
     # binding.pry
@@ -77,7 +87,7 @@ def start_tab_repl
   puts "Enter a string to translate or a blank line to quit:"
 
   while (line = gets.chomp).size > 0
-    puts replace_indicators_with_letters(line)
+    puts mod_line(line)
   end
 end
 
@@ -91,7 +101,7 @@ if @settings[:input_file]
   File.open(new_path, "w") do |f|
     File.readlines(old_path).each do |line|
       if /(\-|\+)\d+/.match?(line)
-        f.puts replace_indicators_with_letters(line)
+        f.puts mod_line(line)
         f.puts line unless @settings[:shift]
       else
         f.puts line
