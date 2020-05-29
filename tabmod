@@ -86,7 +86,14 @@ def mod_line(text)
     end
 
   else
+    # On a diatonic harp, -2 and +3 are the same note.
+    # For the sake of simplicity, we're picking one,
+    # so that the list of notes can easily be shifted up/down.
+    if @settings[:harp_type].downcase.include?("diatonic")
+      translation = translation.gsub(/\-2[^*]/, "+3")
+    end
     @lookup_table.each_pair do |key, value|
+      binding.pry if key == "-2"
       translation = translation.gsub(key, value)
     end
   end
