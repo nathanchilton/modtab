@@ -73,7 +73,6 @@ def mod_line(text)
   if @settings[:shift]
 
     iteration_list = @settings[:shift] > 0 ? @note_list.reverse : @note_list
-    # binding.pry
     first_item = true
     iteration_list.each do |indicator|
       if first_item
@@ -82,7 +81,8 @@ def mod_line(text)
       end
       old_value_location = @note_list.find_index(indicator)
       new_value_location = old_value_location + @settings[:shift]
-      translation = translation.gsub(@note_list[old_value_location], @note_list[new_value_location])
+      new_value =  @note_list[new_value_location] ?  @note_list[new_value_location] : "X" + (" " * (indicator.length - 1))
+      translation = translation.gsub(/(#{"\\" + indicator})(?=[^'o\d]+|$)/, new_value)
     end
 
   else
@@ -90,11 +90,10 @@ def mod_line(text)
     # For the sake of simplicity, we're picking one,
     # so that the list of notes can easily be shifted up/down.
     if @settings[:harp_type].downcase.include?("diatonic")
-      translation = translation.gsub(/\-2[^*]/, "+3")
+      translation = translation.gsub(/\-2[^'o]/, "+3")
     end
     @lookup_table.each_pair do |key, value|
-      binding.pry if key == "-2"
-      translation = translation.gsub(key, value)
+      translation = translation.gsub(/(#{"\\" + key})(?=[^'o\d]+|$)/, value)
     end
   end
 
