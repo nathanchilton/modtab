@@ -7,11 +7,11 @@ Notes/Holes Used:
 
 
 
- +5+6-6 +5 -6 -7 +7 -7
- I wonder as I wander
+ +5 +6 -6  +5 -6 -7 +7 -7
+ I  wonder as  I  wander
 
- -6  +6 +5  +4-4+5-4
- out under the sky,
+ -6  +6 +5 +4-4+5  -4
+ out under   the   sky,
 
  +5  -6 +5  -6  +7 -7
  how Jesus the Savior,
@@ -19,11 +19,11 @@ Notes/Holes Used:
  -6   +7   -7 -6  -6
  did come for to die,
 
- +5   -6   +5  -6  +7 -7
+ +5   -6   +5 -6  +7 -7
  for poor, on'ry  people,
 
- -6    +6  +5  +4-4+5-4
- like you and like I.
+ -6   +6  +5  +4-4+5 -4
+ like you and like   I.
 
 +5 -6 +5 -6 -6 +7 +8
  I wonder as I wander,

@@ -52,6 +52,7 @@ OptionParser.new { |parser|
 @note_list = @lookup_table.keys
 
 def find_notes_used(line)
+  # binding.pry
   @notes_used ||= {}
   @note_list.each do |note|
     @notes_used[note] = true if line.include?(note)
@@ -95,9 +96,9 @@ def mod_line(text)
     @lookup_table.each_pair do |key, value|
       translation = translation.gsub(/(#{"\\" + key})(?=[^'o\d]+|$)/, value)
     end
+    find_notes_used(text)
   end
-
-  find_notes_used(translation)
+# binding.pry
   translation
 end
 
@@ -125,9 +126,10 @@ if @settings[:input_file]
         f.puts line
       end
     end
-    if @settings[:summarize]
+    if @settings[:summarize] && !@notes_used.empty?
       f.puts
       f.puts "Notes/Holes Used:"
+      # binding.pry
       holes_used_string = ""
       @note_list.each do |hole|
         holes_used_string += " #{hole}" if @notes_used[hole]
