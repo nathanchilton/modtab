@@ -48,7 +48,7 @@ OptionParser.new { |parser|
   end
 }.parse!
 
-@lookup_table = JSON.parse(File.read("harptab_note_lookup.json"))[@settings[:harp_type]]
+@lookup_table = JSON.parse(File.read("harptab_note_lookup.json"))[@settings[:harp_type]]["note_list"]
 @note_list = @lookup_table.keys
 
 def find_notes_used(line)
