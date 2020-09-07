@@ -20,14 +20,25 @@ To enter interactive mode:
 To shift notes up/down:
   tabmod --shift=-3 (shifts down from C to G)
 
-
 The default harp type is: Melody Maker G.
 To switch to Diatonic C, use the '-d' parameter.
+
+To transpose from one harmonica layout to another:
+  tabmod -f INPUTFILE -h INPUT_LAYOUT -o OUTPUT_LAYOUT  
+
 "
 
 OptionParser.new { |parser|
+  parser.on("-h HARP_TYPE") do |harp_type|
+    @settings[:harp_type] = harp_type
+  end
+
   parser.on("-d") do |scenario_name|
     @settings[:harp_type] = "Diatonic C"
+  end
+
+  parser.on("-o OUTPUT_LAYOUT") do |output_layout|
+    @settings[:output_layout] = output_layout
   end
 
   parser.on("-f INPUTFILE", "--file=INPUT_FILE") do |input_file|
@@ -48,8 +59,30 @@ OptionParser.new { |parser|
   end
 }.parse!
 
-@lookup_table = JSON.parse(File.read("harptab_note_lookup.json"))[@settings[:harp_type]]["note_list"]
-@note_list = @lookup_table.keys
+def get_harp_data(harp_type)
+  @lookup_table ||= JSON.parse(File.read("harptab_note_lookup.json"))
+  harp_data = {}
+
+  # binding.pry
+  if @lookup_table[harp_type]
+    harp_data = @lookup_table[harp_type]
+  # If there wasn't an exact match, let's look for one which starts with the specified "harp_type"
+  else 
+    binding.pry
+    matching_harps = @lookup_table.keys.select {|type| type =~ /.*#{harp_type}.*/i }
+  case matching_harps.count 
+  when 0
+    puts "No harps were found, matching the name '#{harp_type}'"
+  exit(-1)
+  when 1
+    harp_data = @lookup_table[matching_harps[0]]
+  else
+    puts "Multiple harps were found, matching the name '#{harp_type}':\n#{matching_harps.join("\n")}"
+    exit(-1)
+  end
+end
+  harp_data 
+end
 
 def find_notes_used(line)
   # binding.pry
@@ -86,6 +119,47 @@ def mod_line(text)
       translation = translation.gsub(/(#{"\\" + indicator})(?=[^'o\d]+|$)/, new_value)
     end
 
+  elsif @settings[:output_layout]
+
+    
+    
+    
+    target_harp_data = get_harp_data(@settings[:output_layout])
+    binding.pry
+    target_note_list = target_harp_data["note_list"].keys
+    
+    original_tonic_note_index =  @note_list.find_index(@harp_data["tonic_notes"][0])
+    target_tonic_note_index =  target_note_list.find_index(target_harp_data["tonic_notes"][0])
+
+binding.pry
+
+    note_pattern = /([\+\-]\d+'*)/
+
+    translation = " -6   +6-2''-2''  +5 -2''     +4-4+5 -4"
+    
+    line_segments = translation.split(note_pattern)
+
+    line_segments.each_with_index do |segment, i|
+      if segment =~ note_pattern
+        # find pattern in list
+        # old_value_location = @note_list.find_index(indicator)
+
+        # calculate offset from tonic note
+
+        # find tonic note in target layout 
+        # find note which is the same offset from the tonic note in the new layout
+        
+        
+        # replace segment with note from target layout  
+        line_segments[i] = '*'
+
+
+      end
+
+    end
+
+
+    translation = line_segments.join
   else
     # On a diatonic harp, -2 and +3 are the same note.
     # For the sake of simplicity, we're picking one,
@@ -109,6 +183,17 @@ def start_tab_repl
     puts mod_line(line)
   end
 end
+
+###########################
+#  Execution Starts Here  #
+###########################
+
+
+  # find note_list for harp_type
+@harp_data = get_harp_data(@settings[:harp_type])
+@note_list = @harp_data["note_list"].keys
+
+
 
 if @settings[:input_file]
   old_path = @settings[:input_file]
