@@ -24,7 +24,7 @@ The default harp type is: Melody Maker G.
 To switch to Diatonic C, use the '-d' parameter.
 
 To transpose from one harmonica layout to another:
-  tabmod -f INPUTFILE -h INPUT_LAYOUT -o OUTPUT_LAYOUT  
+  tabmod -f INPUTFILE -h INPUT_LAYOUT -o OUTPUT_LAYOUT
 
 "
 
@@ -67,21 +67,21 @@ def get_harp_data(harp_type)
   if @lookup_table[harp_type]
     harp_data = @lookup_table[harp_type]
   # If there wasn't an exact match, let's look for one which starts with the specified "harp_type"
-  else 
-    binding.pry
-    matching_harps = @lookup_table.keys.select {|type| type =~ /.*#{harp_type}.*/i }
-  case matching_harps.count 
-  when 0
-    puts "No harps were found, matching the name '#{harp_type}'"
-  exit(-1)
-  when 1
-    harp_data = @lookup_table[matching_harps[0]]
   else
-    puts "Multiple harps were found, matching the name '#{harp_type}':\n#{matching_harps.join("\n")}"
-    exit(-1)
+    binding.pry
+    matching_harps = @lookup_table.keys.select { |type| type =~ /.*#{harp_type}.*/i }
+    case matching_harps.count
+    when 0
+      puts "No harps were found, matching the name '#{harp_type}'"
+      exit(-1)
+    when 1
+      harp_data = @lookup_table[matching_harps[0]]
+    else
+      puts "Multiple harps were found, matching the name '#{harp_type}':\n#{matching_harps.join("\n")}"
+      exit(-1)
+    end
   end
-end
-  harp_data 
+  harp_data
 end
 
 def find_notes_used(line)
@@ -115,49 +115,50 @@ def mod_line(text)
       end
       old_value_location = @note_list.find_index(indicator)
       new_value_location = old_value_location + @settings[:shift]
-      new_value =  @note_list[new_value_location] ?  @note_list[new_value_location] : "X" + (" " * (indicator.length - 1))
+      new_value = @note_list[new_value_location] || "X" + (" " * (indicator.length - 1))
       translation = translation.gsub(/(#{"\\" + indicator})(?=[^'o\d]+|$)/, new_value)
     end
 
   elsif @settings[:output_layout]
 
-    
-    
-    
     target_harp_data = get_harp_data(@settings[:output_layout])
-    binding.pry
+    # binding.pry
     target_note_list = target_harp_data["note_list"].keys
-    
-    original_tonic_note_index =  @note_list.find_index(@harp_data["tonic_notes"][0])
-    target_tonic_note_index =  target_note_list.find_index(target_harp_data["tonic_notes"][0])
 
-binding.pry
+    original_tonic_note_index = @note_list.find_index(@harp_data["tonic_notes"][0])
+    target_tonic_note_index = target_note_list.find_index(target_harp_data["tonic_notes"][0])
 
-    note_pattern = /([\+\-]\d+'*)/
+    note_pattern = /([+\-]\d+'*)/
 
     translation = " -6   +6-2''-2''  +5 -2''     +4-4+5 -4"
-    
+
     line_segments = translation.split(note_pattern)
+    binding.pry
 
     line_segments.each_with_index do |segment, i|
-      if segment =~ note_pattern
+      if segment&.match?(note_pattern)
         # find pattern in list
+        original_note_index = @note_list.find_index(segment)
+
         # old_value_location = @note_list.find_index(indicator)
 
         # calculate offset from tonic note
+        offset = original_note_index - original_tonic_note_index
 
-        # find tonic note in target layout 
+        # find tonic note in target layout
         # find note which is the same offset from the tonic note in the new layout
-        
-        
-        # replace segment with note from target layout  
-        line_segments[i] = '*'
+        target_note_index = target_tonic_note_index + offset
 
+        # replace segment with note from target layout
+        if target_note_index < 0 || target_note_index > target_note_list.size(+1)
+          raise "Note would be ouside of range for target"
+        else
+          # line_segments[i] = '*'
+          line_segments[i] = target_note_list[target_note_index]
+        end
 
       end
-
     end
-
 
     translation = line_segments.join
   else
@@ -165,14 +166,14 @@ binding.pry
     # For the sake of simplicity, we're picking one,
     # so that the list of notes can easily be shifted up/down.
     if @settings[:harp_type].downcase.include?("diatonic")
-      translation = translation.gsub(/\-2[^'o]/, "+3")
+      translation = translation.gsub(/-2[^'o]/, "+3")
     end
     @lookup_table.each_pair do |key, value|
       translation = translation.gsub(/(#{"\\" + key})(?=[^'o\d]+|$)/, value)
     end
     find_notes_used(text)
   end
-# binding.pry
+  # binding.pry
   translation
 end
 
@@ -188,12 +189,9 @@ end
 #  Execution Starts Here  #
 ###########################
 
-
-  # find note_list for harp_type
+# find note_list for harp_type
 @harp_data = get_harp_data(@settings[:harp_type])
 @note_list = @harp_data["note_list"].keys
-
-
 
 if @settings[:input_file]
   old_path = @settings[:input_file]
@@ -204,7 +202,7 @@ if @settings[:input_file]
 
   File.open(new_path, "w") do |f|
     File.readlines(old_path).each do |line|
-      if /(\-|\+)\d+/.match?(line)
+      if /(-|\+)\d+/.match?(line)
         f.puts mod_line(line)
         f.puts line unless @settings[:shift]
       else
